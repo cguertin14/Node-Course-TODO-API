@@ -5,8 +5,16 @@ const { app } = require('./../server');
 const { Todo } = require('./../models/todo');
 const { User } = require('./../models/user');
 
+// Seed data
+const todos = [
+    { text: 'Boire du lait' },
+    { text: 'Boire du jus' },
+    { text: 'Boire de la soupe' },
+    { text: 'Boire du sirop' }
+];
+
 beforeEach((done) => {
-    Todo.remove({}).then(() => done());
+    Todo.remove({}).then(() => Todo.insertMany(todos)).then(() => done());
 });
 
 describe('POSTS /todos', () => {
@@ -25,7 +33,7 @@ describe('POSTS /todos', () => {
                     return done(err);
                 }
 
-                Todo.find().then(todos => {
+                Todo.find({ text }).then(todos => {
                     expect(todos.length).toBe(1);
                     expect(todos[0].text).toBe(text);
                     done();
@@ -45,9 +53,21 @@ describe('POSTS /todos', () => {
                 }
 
                 Todo.find().then(todos => {
-                    expect(todos.length).toBe(0);
+                    expect(todos.length).toBe(4);
                     done()
                 }).catch(e => done(e));
             });
+    });
+});
+
+describe('GET /todos', () => {
+    it('should get all todos', (done) => {
+        request(app)
+            .get('/todos')
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todos.length).toBe(4);
+            })
+            .end(done);
     });
 });
