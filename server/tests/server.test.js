@@ -11,7 +11,7 @@ const todos = [
     { _id: new ObjectId(), text: 'Boire du lait' },
     { _id: new ObjectId(), text: 'Boire du jus' },
     { _id: new ObjectId(), text: 'Boire de la soupe' },
-    { _id: new ObjectId(), text: 'Boire du sirop' }
+    { _id: new ObjectId(), text: 'Boire du sirop', completed: true, completedAt: 333 }
 ];
 
 beforeEach((done) => {
@@ -131,6 +131,39 @@ describe('DELETE /todos/:id', () => {
         request(app)
             .delete(`/todos/123`)
             .expect(404)
+            .end(done);
+    });
+});
+
+describe('PATCH /todos/:id', () => {
+    it('should update the todo', (done) => {
+        let id = todos[0]._id.toHexString();
+        let text = 'MIKE', completed = true;
+        request(app)
+            .patch(`/todos/${id}`)
+            .type('urlencoded')
+            .send({ text, completed })
+            .expect(200)
+            .expect(res => {
+                expect(res.body.todo.text).toBe(text)
+                expect(res.body.todo.completed).toBe(completed);
+            })
+            .end(done);
+    });
+
+    it('should clear completedAt when todo is not completed', (done) => {
+        let id = todos[0]._id.toHexString();
+        let text = 'WAZOW', completed = false;
+        request(app)
+            .patch(`/todos/${id}`)
+            .type('urlencoded')
+            .send({ text, completed })
+            .expect(200)
+            .expect(res => {
+                expect(res.body.todo.text).toBe(text)
+                expect(res.body.todo.completed).toBe(completed);
+                expect(res.body.todo.completedAt).toBeFalsy();
+            })
             .end(done);
     });
 });
