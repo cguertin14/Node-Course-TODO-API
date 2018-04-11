@@ -1,5 +1,6 @@
 const expect = require('expect');
 const request = require('supertest');
+const _ = require('lodash');
 const { ObjectId } = require('mongodb');
 
 const { app } = require('./../server');
@@ -206,9 +207,9 @@ describe('POST /users', () => {
 
                 User.findOne({ email }).then(user => {
                     expect(user).toBeTruthy();
-                    expect(user.password).not.toBe(password);
+                    expect(user.password).toNotBe(password);
                     done();
-                })
+                }).catch(e => done(e));
             });
     });
 
@@ -236,3 +237,52 @@ describe('POST /users', () => {
             .end(done);
     });
 });
+
+describe('POST /users/login', () => {
+    it('should login user and return auth token', (done) => {
+        let email = users[1].email, password = users[1].password;
+        request(app)
+            .post('/users/login')
+            .type('urlencoded')
+            .send({ email, password  })
+            .expect(200)
+            .expect(res => {
+                expect(res.headers['x-auth']).toBeTruthy();
+            })
+            .end((err,res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findById(users[1]._id).then(user => {
+                    expect(user.tokens[0]).toInclude({
+                        access: 'auth',
+                        token: res.headers['x-auth']
+                    });
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should reject invalid login', (done) => {
+        let email = 'a@a.a', password = 'jaqueline';
+        request(app)
+            .post('/users/login')
+            .type('urlencoded')
+            .send({ email, password  })
+            .expect(401)
+            .expect(res => {
+                expect(res.headers['x-auth']).toBeFalsy();
+            })
+            .end((err,res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findById(users[1]._id).then(user => {
+                    expect(user.tokens.length).toBe(0);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+})
