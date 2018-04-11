@@ -15,7 +15,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.post('/todos',(req,res) => {
     let todo = new Todo({
@@ -96,6 +96,20 @@ app.patch('/todos/:id',(req,res) => {
     }).catch(e => {
         res.status(400).send();
     });
+});
+
+app.post('/users', (req,res) => {
+    let body = _.pick(req.body, ['email','password']);
+
+    let user = new User(body);
+    
+    user.save().then(() => {
+        return user.generateAuthToken();
+    }).then(token => {
+        res.header('x-auth', token).status(201).send({user});
+    }).catch(e => {
+        res.status(400).send(e);
+    })
 });
 
 app.listen(port, () => {
