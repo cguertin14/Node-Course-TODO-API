@@ -119,6 +119,21 @@ app.get('/users/me', authenticate, (req,res) => {
     res.send(req.user);
 });
 
+app.post('/users/login',(req,res) => {
+    let body = _.pick(req.body, ['email','password']);
+    let user = User.findByCredentials(body.email,body.password).then(user => {
+        // Create new token
+        return user.generateAuthToken().then((token) => {
+            res.header('x-auth', token).send({user});
+        });
+    }).catch(e => {
+        // Send error response (User not found...)
+        res.status(401).send({
+            status: 'Wrong credentials.'
+        });
+    });
+});
+
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
 });

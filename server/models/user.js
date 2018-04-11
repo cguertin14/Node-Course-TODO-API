@@ -35,6 +35,7 @@ const UserSchema = new mongoose.Schema({
     ]
 });
 
+// Methods
 UserSchema.methods.toJSON = function() {
     let user = this;
     let userObject = user.toObject();
@@ -53,6 +54,7 @@ UserSchema.methods.generateAuthToken = function() {
     });
 };
 
+// Statics
 UserSchema.statics.findByToken = function(token) {
     let user = this;
     let decoded;
@@ -70,6 +72,28 @@ UserSchema.statics.findByToken = function(token) {
     });
 };
 
+UserSchema.statics.findByCredentials = function(email,password) {
+    let user = this;
+    return User.findOne({ email }).then(user => {
+        if (!user) {
+            return Promise.reject();
+        }
+
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, user.password, (err, res) => {
+                if (res) {
+                    resolve(user);
+                } else {
+                    reject();
+                }
+            });
+        });
+    }).catch(e => {
+        return Promise.reject();
+    });
+};
+
+// Events
 UserSchema.pre('save', function(next) {
     let user = this;
 
