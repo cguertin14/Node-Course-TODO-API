@@ -140,7 +140,7 @@ describe('DELETE /todos/:id', () => {
                 }
 
                 Todo.findById(hexId).then(todo => {
-                    expect(todo).toExist();
+                    expect(todo).toBeTruthy();
                     done();
                 }).catch(e => done(e));
             });
@@ -176,6 +176,7 @@ describe('PATCH /todos/:id', () => {
             .expect(res => {
                 expect(res.body.todo.text).toBe(text)
                 expect(res.body.todo.completed).toBe(completed);
+                expect(typeof(res.body.todo.completedAt)).toBe('number');
             })
             .end(done);
     });
@@ -228,7 +229,7 @@ describe('GET /users/me', () => {
             .get('/users/me')
             .expect(401)
             .expect((res) => {
-                expect(res.body).toEqual({ status: 'Invalid token.' });
+                expect(res.body).toEqual({ error: 'Token is required.' });
             })
             .end(done);
     });
@@ -256,7 +257,7 @@ describe('POST /users', () => {
 
                 User.findOne({ email }).then(user => {
                     expect(user).toBeTruthy();
-                    expect(user.password).toNotBe(password);
+                    expect(user.password).not.toBe(password);
                     done();
                 }).catch(e => done(e));
             });
@@ -304,7 +305,7 @@ describe('POST /users/login', () => {
                 }
 
                 User.findById(users[1]._id).then(user => {
-                    expect(user.tokens[1]).toInclude({
+                    expect(user.toObject().tokens[1]).toMatchObject({
                         access: 'auth',
                         token: res.headers['x-auth']
                     });
